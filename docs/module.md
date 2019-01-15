@@ -6,7 +6,7 @@
 
 在 ES6 之前，社区制定了一些模块加载方案，最主要的有 CommonJS 和 AMD 两种。前者用于服务器，后者用于浏览器。ES6 在语言标准的层面上，实现了模块功能，而且实现得相当简单，完全可以取代 CommonJS 和 AMD 规范，成为浏览器和服务器通用的模块解决方案。
 
-ES6 模块的设计思想，是尽量的静态化，使得编译时就能确定模块的依赖关系，以及输入和输出的变量。CommonJS 和 AMD 模块，都只能在运行时确定这些东西。比如，CommonJS 模块就是对象，输入时必须查找对象属性。
+ES6 模块的设计思想是尽量的静态化，使得编译时就能确定模块的依赖关系，以及输入和输出的变量。CommonJS 和 AMD 模块，都只能在运行时确定这些东西。比如，CommonJS 模块就是对象，输入时必须查找对象属性。
 
 ```javascript
 // CommonJS模块
@@ -204,6 +204,24 @@ function setName(element) {
 ```javascript
 import { lastName as surname } from './profile.js';
 ```
+
+`import`命令输入的变量都是只读的，因为它的本质是输入接口。也就是说，不允许在加载模块的脚本里面，改写接口。
+
+```javascript
+import {a} from './xxx.js'
+
+a = {}; // Syntax Error : 'a' is read-only;
+```
+
+上面代码中，脚本加载了变量`a`，对其重新赋值就会报错，因为`a`是一个只读的接口。但是，如果`a`是一个对象，改写`a`的属性是允许的。
+
+```javascript
+import {a} from './xxx.js'
+
+a.foo = 'hello'; // 合法操作
+```
+
+上面代码中，`a`的属性可以成功改写，并且其他模块也可以读到改写后的值。不过，这种写法很难查错，建议凡是输入的变量，都当作完全只读，轻易不要改变它的属性。
 
 `import`后面的`from`指定模块文件的位置，可以是相对路径，也可以是绝对路径，`.js`后缀可以省略。如果只是模块名，不带有路径，那么必须有配置文件，告诉 JavaScript 引擎该模块的位置。
 
@@ -435,7 +453,7 @@ export default 42;
 export 42;
 ```
 
-上面代码中，后一句报错是因为没有指定对外的接口，而前一句指定外对接口为`default`。
+上面代码中，后一句报错是因为没有指定对外的接口，而前一句指定对外接口为`default`。
 
 有了`export default`命令，输入模块时就非常直观了，以输入 lodash 模块为例。
 
@@ -446,7 +464,7 @@ import _ from 'lodash';
 如果想在一条`import`语句中，同时输入默认方法和其他接口，可以写成下面这样。
 
 ```javascript
-import _, { each, each as forEach } from 'lodash';
+import _, { each, forEach } from 'lodash';
 ```
 
 对应上面代码的`export`语句如下。
@@ -483,12 +501,12 @@ let o = new MyClass();
 ```javascript
 export { foo, bar } from 'my_module';
 
-// 等同于
+// 可以简单理解为
 import { foo, bar } from 'my_module';
 export { foo, bar };
 ```
 
-上面代码中，`export`和`import`语句可以结合在一起，写成一行。
+上面代码中，`export`和`import`语句可以结合在一起，写成一行。但需要注意的是，写成一行以后，`foo`和`bar`实际上并没有被导入当前模块，只是相当于对外转发了这两个接口，导致当前模块不能直接使用`foo`和`bar`。
 
 模块的接口改名和整体输出，也可以采用这种写法。
 
@@ -625,14 +643,14 @@ export {users} from './users';
 
 ```javascript
 // script.js
-import {db, users} from './index';
+import {db, users} from './constants/index';
 ```
 
 ## import()
 
 ### 简介
 
-前面介绍过，`import`命令会被 JavaScript 引擎静态分析，先于模块内的其他模块执行（叫做”连接“更合适）。所以，下面的代码会报错。
+前面介绍过，`import`命令会被 JavaScript 引擎静态分析，先于模块内的其他语句执行（`import`命令叫做“连接” binding 其实更合适）。所以，下面的代码会报错。
 
 ```javascript
 // 报错
@@ -650,7 +668,7 @@ const path = './' + fileName;
 const myModual = require(path);
 ```
 
-上面的语句就是动态加载，`require`到底加载哪一个模块，只有运行时才知道。`import`语句做不到这一点。
+上面的语句就是动态加载，`require`到底加载哪一个模块，只有运行时才知道。`import`命令做不到这一点。
 
 因此，有一个[提案](https://github.com/tc39/proposal-dynamic-import)，建议引入`import()`函数，完成动态加载。
 
@@ -674,9 +692,7 @@ import(`./section-modules/${someVariable}.js`)
   });
 ```
 
-`import()`函数可以用在任何地方，不仅仅是模块，非模块的脚本也可以使用。它是运行时执行，也就是说，什么时候运行到这一句，也会加载指定的模块。另外，`import()`函数与所加载的模块没有静态连接关系，这点也是与`import`语句不相同。
-
-`import()`类似于 Node 的`require`方法，区别主要是前者是异步加载，后者是同步加载。
+`import()`函数可以用在任何地方，不仅仅是模块，非模块的脚本也可以使用。它是运行时执行，也就是说，什么时候运行到这一句，就会加载指定的模块。另外，`import()`函数与所加载的模块没有静态连接关系，这点也是与`import`语句不相同。`import()`类似于 Node 的`require`方法，区别主要是前者是异步加载，后者是同步加载。
 
 ### 适用场合
 

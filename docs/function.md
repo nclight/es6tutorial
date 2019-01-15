@@ -594,12 +594,9 @@ ES6 允许使用“箭头”（`=>`）定义函数。
 
 ```javascript
 var f = v => v;
-```
 
-上面的箭头函数等同于：
-
-```javascript
-var f = function(v) {
+// 等同于
+var f = function (v) {
   return v;
 };
 ```
@@ -634,6 +631,15 @@ let getTempItem = id => { id: id, name: "Temp" };
 let getTempItem = id => ({ id: id, name: "Temp" });
 ```
 
+下面是一种特殊情况，虽然可以运行，但会得到错误的结果。
+
+```javascript
+let foo = () => { a: 1 };
+foo() // undefined
+```
+
+上面代码中，原始意图是返回一个对象`{ a: 1 }`，但是由于引擎认为大括号是代码块，所以执行了一行语句`a: 1`。这时，`a`可以被解释为语句的标签，因此实际执行的语句是`1;`，然后函数就结束了，没有返回值。
+
 如果箭头函数只有一行语句，且不需要返回值，可以采用下面的写法，就不用写大括号了。
 
 ```javascript
@@ -654,7 +660,7 @@ function full(person) {
 箭头函数使得表达更加简洁。
 
 ```javascript
-const isEven = n => n % 2 == 0;
+const isEven = n => n % 2 === 0;
 const square = n => n * n;
 ```
 
@@ -846,6 +852,36 @@ foo(2, 4, 6, 8)
 
 长期以来，JavaScript 语言的`this`对象一直是一个令人头痛的问题，在对象方法中使用`this`，必须非常小心。箭头函数”绑定”`this`，很大程度上解决了这个困扰。
 
+### 不适用场合
+
+由于箭头函数使得`this`从“动态”变成“静态”，下面两个场合不应该使用箭头函数。
+
+第一个场合是定义函数的方法，且该方法内部包括`this`。
+
+```javascript
+const cat = {
+  lives: 9,
+  jumps: () => {
+    this.lives--;
+  }
+}
+```
+
+上面代码中，`cat.jumps()`方法是一个箭头函数，这是错误的。调用`cat.jumps()`时，如果是普通函数，该方法内部的`this`指向`cat`；如果写成上面那样的箭头函数，使得`this`指向全局对象，因此不会得到预期结果。
+
+第二个场合是需要动态`this`的时候，也不应使用箭头函数。
+
+```javascript
+var button = document.getElementById('press');
+button.addEventListener('click', () => {
+  this.classList.toggle('on');
+});
+```
+
+上面代码运行时，点击按钮会报错，因为`button`的监听函数是一个箭头函数，导致里面的`this`就是全局对象。如果改成普通函数，`this`就会动态指向被点击的按钮对象。
+
+另外，如果函数体很复杂，有许多行，或者函数内部有大量的读写操作，不单纯是为了计算值，这时也不应该使用箭头函数，而是要使用普通函数，这样可以提高代码可读性。
+
 ### 嵌套的箭头函数
 
 箭头函数内部，还可以再使用箭头函数。下面是一个 ES5 语法的多重嵌套函数。
@@ -944,23 +980,15 @@ let log = ::console.log;
 var log = console.log.bind(console);
 ```
 
-双冒号运算符的运算结果，还是一个函数，因此可以采用链式写法。
+如果双冒号运算符的运算结果，还是一个对象，就可以采用链式写法。
 
 ```javascript
-// 例一
 import { map, takeWhile, forEach } from "iterlib";
 
 getPlayers()
 ::map(x => x.character())
 ::takeWhile(x => x.strength > 100)
 ::forEach(x => console.log(x));
-
-// 例二
-let { find, html } = jake;
-
-document.querySelectorAll("div.myClass")
-::find("p")
-::html("hahaha");
 ```
 
 ## 尾调用优化
@@ -1329,41 +1357,3 @@ clownsEverywhere(
 
 这样的规定也使得，函数参数与数组和对象的尾逗号规则，保持一致了。
 
-## catch 语句的参数
-
-ES2018 [允许](https://github.com/tc39/proposal-optional-catch-binding)`try...catch`结构的`catch`语句不带有参数。这个提案跟参数有关，也放在这一章介绍。
-
-传统的写法是`catch`语句必须带有参数，用来接收`try`代码块抛出的错误。
-
-```javascript
-try {
-  //  ···
-} catch (error) {
-  //  ···
-}
-```
-
-上面代码中，即使没有用到`error`，传统写法也是不允许省略。
-
-新的写法允许省略`catch`后面的参数，而不报错。
-
-```javascript
-try {
-  //  ···
-} catch {
-  //  ···
-}
-```
-
-新写法只在不需要错误实例的情况下有用，因此不及传统写法的用途广。
-
-```javascript
-let jsonData;
-try {
-  jsonData = JSON.parse(str);
-} catch {
-  jsonData = DEFAULT_DATA;
-}
-```
-
-上面代码中，`JSON.parse`报错只有一种可能：解析失败。所以一旦报错，基本上不需要用到错误实例，所以可以省略`catch`后面的参数。

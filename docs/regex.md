@@ -105,7 +105,7 @@ ES6 新增了使用大括号表示 Unicode 字符，这种表示法在正则表�
 /^\S$/u.test('𠮷') // true
 ```
 
-上面代码的`\S`是预定义模式，匹配所有不是空格的字符。只有加了`u`修饰符，它才能正确匹配码点大于`0xFFFF`的 Unicode 字符。
+上面代码的`\S`是预定义模式，匹配所有非空白字符。只有加了`u`修饰符，它才能正确匹配码点大于`0xFFFF`的 Unicode 字符。
 
 利用这一点，可以写出一个正确返回字符串长度的函数。
 
@@ -131,6 +131,20 @@ codePointLength(s) // 2
 ```
 
 上面代码中，不加`u`修饰符，就无法识别非规范的`K`字符。
+
+## RegExp.prototype.unicode 属性
+
+正则实例对象新增`unicode`属性，表示是否设置了`u`修饰符。
+
+```javascript
+const r1 = /hello/;
+const r2 = /hello/u;
+
+r1.unicode // false
+r2.unicode // true
+```
+
+上面代码中，正则表达式是否设置了`u`修饰符，可以从`unicode`属性看出来。
 
 ## y 修饰符
 
@@ -182,7 +196,7 @@ match.index // 3
 REGEX.lastIndex // 4
 
 // 4号位开始匹配失败
-REGEX.exec('xaxa') // null
+REGEX.exec('xaya') // null
 ```
 
 上面代码中，`lastIndex`属性指定每次搜索的开始位置，`g`修饰符从这个位置开始向后搜索，直到发现匹配为止。
@@ -202,7 +216,7 @@ REGEX.exec('xaya') // null
 REGEX.lastIndex = 3;
 
 // 3号位置是粘连，匹配成功
-const match = REGEX.exec('xaxa');
+const match = REGEX.exec('xaya');
 match.index // 3
 REGEX.lastIndex // 4
 ```
@@ -264,16 +278,16 @@ tokenize(TOKEN_G, '3x + 4')
 
 上面代码中，`g`修饰符会忽略非法字符，而`y`修饰符不会，这样就很容易发现错误。
 
-## sticky 属性
+## RegExp.prototype.sticky 属性
 
-与`y`修饰符相匹配，ES6 的正则对象多了`sticky`属性，表示是否设置了`y`修饰符。
+与`y`修饰符相匹配，ES6 的正则实例对象多了`sticky`属性，表示是否设置了`y`修饰符。
 
 ```javascript
 var r = /hello\d/y;
 r.sticky // true
 ```
 
-## flags 属性
+## RegExp.prototype.flags 属性
 
 ES6 为正则表达式新增了`flags`属性，会返回正则表达式的修饰符。
 
@@ -368,7 +382,7 @@ const RE_DOLLAR_PREFIX = /(?<=\$)foo/g;
 
 “后行断言”的实现，需要先匹配`/(?<=y)x/`的`x`，然后再回到左边，匹配`y`的部分。这种“先右后左”的执行顺序，与所有其他正则操作相反，导致了一些不符合预期的行为。
 
-首先，”后行断言“的组匹配，与正常情况下结果是不一样的。
+首先，后行断言的组匹配，与正常情况下结果是不一样的。
 
 ```javascript
 /(?<=(\d+)(\d+))$/.exec('1053') // ["", "1", "053"]
@@ -536,7 +550,7 @@ let re = /(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u;
    S, // 原字符串 2015-01-02
    groups // 具名组构成的一个对象 {year, month, day}
  ) => {
- let {day, month, year} = args[args.length - 1];
+ let {day, month, year} = groups;
  return `${day}/${month}/${year}`;
 });
 ```
@@ -597,7 +611,10 @@ matches
 
 ```javascript
 const string = 'test1test2test3';
+
+// g 修饰符加不加都可以
 const regex = /t(e)(st(\d?))/g;
+
 for (const match of string.matchAll(regex)) {
   console.log(match);
 }

@@ -6,7 +6,7 @@
 
 ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。
 
-Set 本身是一个构造函数，用来生成 Set 数据结构。
+`Set`本身是一个构造函数，用来生成 Set 数据结构。
 
 ```javascript
 const s = new Set();
@@ -19,9 +19,9 @@ for (let i of s) {
 // 2 3 5 4
 ```
 
-上面代码通过`add`方法向 Set 结构加入成员，结果表明 Set 结构不会添加重复的值。
+上面代码通过`add()`方法向 Set 结构加入成员，结果表明 Set 结构不会添加重复的值。
 
-Set 函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。
+`Set`函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。
 
 ```javascript
 // 例一
@@ -34,28 +34,34 @@ const items = new Set([1, 2, 3, 4, 5, 5, 5, 5]);
 items.size // 5
 
 // 例三
-function divs () {
-  return [...document.querySelectorAll('div')];
-}
-
-const set = new Set(divs());
+const set = new Set(document.querySelectorAll('div'));
 set.size // 56
 
 // 类似于
-divs().forEach(div => set.add(div));
+const set = new Set();
+document
+ .querySelectorAll('div')
+ .forEach(div => set.add(div));
 set.size // 56
 ```
 
 上面代码中，例一和例二都是`Set`函数接受数组作为参数，例三是接受类似数组的对象作为参数。
 
-上面代码中，也展示了一种去除数组重复成员的方法。
+上面代码也展示了一种去除数组重复成员的方法。
 
 ```javascript
 // 去除数组的重复成员
 [...new Set(array)]
 ```
 
-向 Set 加入值的时候，不会发生类型转换，所以`5`和`"5"`是两个不同的值。Set 内部判断两个值是否不同，使用的算法叫做“Same-value equality”，它类似于精确相等运算符（`===`），主要的区别是`NaN`等于自身，而精确相等运算符认为`NaN`不等于自身。
+上面的方法也可以用于，去除字符串里面的重复字符。
+
+```javascript
+[...new Set('ababbc')].join('')
+// "abc"
+```
+
+向 Set 加入值的时候，不会发生类型转换，所以`5`和`"5"`是两个不同的值。Set 内部判断两个值是否不同，使用的算法叫做“Same-value-zero equality”，它类似于精确相等运算符（`===`），主要的区别是`NaN`等于自身，而精确相等运算符认为`NaN`不等于自身。
 
 ```javascript
 let set = new Set();
@@ -220,7 +226,7 @@ for (let x of set) {
 Set 结构的实例与数组一样，也拥有`forEach`方法，用于对每个成员执行某种操作，没有返回值。
 
 ```javascript
-set = new Set([1, 4, 9]);
+let set = new Set([1, 4, 9]);
 set.forEach((value, key) => console.log(key + ' : ' + value))
 // 1 : 1
 // 4 : 4
@@ -805,7 +811,7 @@ new Map([
 
 **（3）Map 转为对象**
 
-如果所有 Map 的键都是字符串，它可以转为对象。
+如果所有 Map 的键都是字符串，它可以无损地转为对象。
 
 ```javascript
 function strMapToObj(strMap) {
@@ -822,6 +828,8 @@ const myMap = new Map()
 strMapToObj(myMap)
 // { yes: true, no: false }
 ```
+
+如果有非字符串的键名，那么这个键名会被转成字符串，再作为对象的键名。
 
 **（4）对象转为 Map**
 
@@ -877,7 +885,7 @@ jsonToStrMap('{"yes": true, "no": false}')
 // Map {'yes' => true, 'no' => false}
 ```
 
-但是，有一种特殊情况，整个 JSON 就是一个数组，且每个数组成员本身，又是一个有两个成员的数组。这时，它可以一一对应地转为 Map。这往往是数组转为 JSON 的逆操作。
+但是，有一种特殊情况，整个 JSON 就是一个数组，且每个数组成员本身，又是一个有两个成员的数组。这时，它可以一一对应地转为 Map。这往往是 Map 转为数组 JSON 的逆操作。
 
 ```javascript
 function jsonToMap(jsonStr) {
@@ -987,7 +995,7 @@ wm.get(key)
 
 ### WeakMap 的语法
 
-WeakMap 与 Map 在 API 上的区别主要是两个，一是没有遍历操作（即没有`key()`、`values()`和`entries()`方法），也没有`size`属性。因为没有办法列出所有键名，某个键名是否存在完全不可预测，跟垃圾回收机制是否运行相关。这一刻可以取到键名，下一刻垃圾回收机制突然运行了，这个键名就没了，为了防止出现不确定性，就统一规定不能取到键名。二是无法清空，即不支持`clear`方法。因此，`WeakMap`只有四个方法可用：`get()`、`set()`、`has()`、`delete()`。
+WeakMap 与 Map 在 API 上的区别主要是两个，一是没有遍历操作（即没有`keys()`、`values()`和`entries()`方法），也没有`size`属性。因为没有办法列出所有键名，某个键名是否存在完全不可预测，跟垃圾回收机制是否运行相关。这一刻可以取到键名，下一刻垃圾回收机制突然运行了，这个键名就没了，为了防止出现不确定性，就统一规定不能取到键名。二是无法清空，即不支持`clear`方法。因此，`WeakMap`只有四个方法可用：`get()`、`set()`、`has()`、`delete()`。
 
 ```javascript
 const wm = new WeakMap();

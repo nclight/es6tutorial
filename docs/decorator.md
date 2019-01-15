@@ -103,7 +103,7 @@ let obj = new MyClass();
 obj.foo() // 'foo'
 ```
 
-上面代码通过修饰器`mixins`，把`Foo`类的方法添加到了`MyClass`的实例上面。可以用`Object.assign()`模拟这个功能。
+上面代码通过修饰器`mixins`，把`Foo`对象的方法添加到了`MyClass`的实例上面。可以用`Object.assign()`模拟这个功能。
 
 ```javascript
 const Foo = {
@@ -201,7 +201,7 @@ function log(target, name, descriptor) {
 
   descriptor.value = function() {
     console.log(`Calling ${name} with`, arguments);
-    return oldValue.apply(null, arguments);
+    return oldValue.apply(this, arguments);
   };
 
   return descriptor;
@@ -774,7 +774,7 @@ obj.bar() // bar
 class MyClass {}
 ```
 
-上面代码排除`了TExample`的`foo`方法和`bar`方法，为`baz`方法起了别名`exampleBaz`。
+上面代码排除了`TExample`的`foo`方法和`bar`方法，为`baz`方法起了别名`exampleBaz`。
 
 `as`方法则为上面的代码提供了另一种写法。
 
